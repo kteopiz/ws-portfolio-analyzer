@@ -181,9 +181,11 @@ function validatedParsedHoldingsCsv(data : unknown[], errors : Papa.ParseError[]
 
     // The single-column footer has fewer fields than the holdings header.
     for (const err of errors) {
+        // Pass error if detection of date row field
         if (err.type === "FieldMismatch" && err.code === "TooFewFields" && err.row === dateRowIdx) {
             continue;
         } else {
+        // Other error unrelated to malformed rows, or non-existence of rows exists
             return false;
         }
     }

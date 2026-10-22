@@ -2,7 +2,7 @@ import Papa from 'papaparse';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path'
 
-// Defined by Wealthsimple from Holdings Report CSV
+// Wealthsimple holdings report columns, before numeric values are converted.
 interface HoldingsRow {
   "Account Name": string;
   "Account Type": string;
@@ -27,10 +27,18 @@ interface HoldingsRow {
   "Market Unrealized Returns Currency": string;
 };
 
+// With header parsing enabled, the date report footer occupies the first column mapping the date to "Account Name"
 interface HoldingsDateRow {
     "Account Name": string;
 };
 
+/**
+ * Checks that every expected holdings column contains a string.
+ * This checks row structure, not whether field contents are valid.
+ *
+ * @param value - Parsed CSV row to inspect.
+ * @returns Whether the value matches the raw holdings row shape.
+ */
 function isHoldingRow(value: unknown): value is HoldingsRow {
     if (typeof value !== 'object' || value === null) {
         return false;
@@ -62,10 +70,17 @@ function isHoldingRow(value: unknown): value is HoldingsRow {
 
     const row = value as Record<string, unknown>;
 
-    // look this over... not every row needs to be a row be a string
+    // CSV values remain strings because dynamic typing is not enabled. May change in future.
     return requiredFields.every((field) => typeof row[field] === 'string');
 }
 
+/**
+ * Recognizes the report footer by its "As of YYYY-MM-DD" prefix.
+ * The prefix check does not validate the calendar date or trailing timestamp.
+ *
+ * @param value - Parsed CSV row to inspect.
+ * @returns Whether the first column matches the report date prefix.
+ */
 function isHoldingsDateRow(value: unknown): value is HoldingsDateRow {
     if (typeof value !== 'object' || value === null) {
         return false;
@@ -80,8 +95,11 @@ function isHoldingsDateRow(value: unknown): value is HoldingsDateRow {
 );
 }
 
-// TODO: this needs to come from a remote download later
-    // - Add validation of the file type, actual CSV, not executable 
+/**
+ * Reads the local sample holdings report as UTF-8 text.
+ *
+ * @returns File contents, or an empty string if the file cannot be read.
+ */
 async function readHoldingsFile() {
     const filePath : string = path.join(
         '/Users/kylet/Desktop/repos/ws-portfolio-analyzer/src/parsers',
@@ -89,13 +107,19 @@ async function readHoldingsFile() {
     try {
         const data: string = await fs.readFile(filePath, 'utf8')
         return data
-    } catch(e) {
-        console.error('Error reading file', e);
+    } catch {
         return "";
     }
 }
 
-//  needs to be validated as well
+/**
+ * Parses the sample report and checks its rows and parser errors.
+ * Papa Parse type definitions: https://www.papaparse.com/docs#results
+ * 
+ * @returns Parsed rows, including the date footer, when validation succeeds;
+ * otherwise Papa Parse errors. An empty or unreadable file returns an empty
+ * array, as can a validation failure with no parser errors.
+ */
 async function getHoldingsData(): Promise<HoldingsRow[] | Papa.ParseError[]> {
     let rawHoldingsFileData : string = await readHoldingsFile();
 
@@ -113,38 +137,38 @@ async function getHoldingsData(): Promise<HoldingsRow[] | Papa.ParseError[]> {
         
     const validData = validatedParsedHoldingsCsv(parseData, parseErrors)
 
-    // TODO: Act based on the parseErrors
-        // malformed? -> do something
-        // can get very specific based on this... ex. two date rows? try to fix with the user...
     return validData ? parseData : parseErrors;
 }
 
+/**
+ * Checks report rows for holdings and a single recognized date footer.
+ * Only a TooFewFields parser error on that footer is accepted.
+ *
+ * @param data - Rows returned by Papa Parse.
+ * @param errors - Parser errors associated with those rows.
+ * @returns Whether the rows and parser errors pass the report checks.
+ */
 function validatedParsedHoldingsCsv(data : unknown[], errors : Papa.ParseError[]) : boolean {
-    // at least one holding row exists
-    // all rows of holdings is holding row or a date row
-    // date row exists 
     let holdingRowExists : boolean = false;
     let dateRowExists : boolean = false;
     let dateRowIdx : number | undefined = undefined;
     let idx = 0
 
     for (const row of data) {
-        // 
         if (!isHoldingRow(row) && !isHoldingsDateRow(row)) {
             return false;
         }
-        // at least one holding row must exist
+        // Record the first holding row so an otherwise empty report is rejected.
         else if (!holdingRowExists && isHoldingRow(row)) {
             holdingRowExists = true;
         }
-        // at least one date row must exist
+        // Track the footer index to identify its expected field-count error.
         else if (!dateRowExists && isHoldingsDateRow(row)) {
             dateRowExists = true;
             dateRowIdx = idx;
         }
         else if (dateRowExists && isHoldingsDateRow(row)) {
-            // TODO: if more then one date row exists how do we know which is correct?
-            console.log('many date rows')
+            // Reject additional date footers rather than choosing one.
             return false;
         }
         idx++;
@@ -155,12 +179,10 @@ function validatedParsedHoldingsCsv(data : unknown[], errors : Papa.ParseError[]
         return false;
     }
 
-    // errors:
-    // date row error exists and we can explain it (exists matching row, and that row is is a HoldingsDateRow)
-    // no unexplicable errors
+    // The single-column footer has fewer fields than the holdings header.
     for (const err of errors) {
         if (err.type === "FieldMismatch" && err.code === "TooFewFields" && err.row === dateRowIdx) {
-            console.log('explicable error for date row');
+            continue;
         } else {
             return false;
         }
@@ -168,28 +190,19 @@ function validatedParsedHoldingsCsv(data : unknown[], errors : Papa.ParseError[]
     return true;
 }
 
-const res = await getHoldingsData();
-
-console.log(res)
-
-// major to do list
-    // - imitate user upload via express server -> new branch completely
-    // - error handling / unit testing / JS docs in order
-        // - some errors are essential to bubble up to notify user, determine the must propagate errors 
-        // - JS doc excluding param types since TS, use for explain, tag, and examples
-        // - clarify comments more 
-        // - write unit tests using vitest
-    // - add useful links for docs (papaparse error type, wealthsimple page to get holdings or smth instruction)
-
-// What do we need from this data to actually do a current snapshot?
-// API -> list of current tickers from holdings
-// tbd...
-
-
-
-
-
-
-
-
-
+/*
+ * FUTURE TODO
+ * - (OTHER BRANCH) - Add an Express upload flow on a separate feature branch and replace the
+ *   hard-coded sample path with an input supplied by the caller.
+ * - Validate uploaded content and expected CSV structure.
+ * - Define field-level validation and conversion rules for numeric values,
+ *   required values, and the report timestamp.
+ * - Distinguish file-read failures, empty input, parser errors, and report
+ *   validation failures; decide which errors must reach the API caller.
+ * - Provide actionable validation messages, including duplicate date footers.
+ * - Add Vitest coverage for valid reports, malformed rows, missing or duplicate
+ *   footers, parser errors, and file-read failures.
+ * - Link to Wealthsimple export instructions.
+ * - Define the data needed for a current portfolio snapshot, including ticker
+ *   extraction and normalization for the market-data API.
+ */

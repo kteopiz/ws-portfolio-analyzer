@@ -202,7 +202,6 @@ function validatedParsedHoldingsCsv(data : unknown[], errors : Papa.ParseError[]
  * - Provide actionable validation messages, including duplicate date footers.
  * - Add Vitest coverage for valid reports, malformed rows, missing or duplicate
  *   footers, parser errors, and file-read failures.
- * - Link to Wealthsimple export instructions.
  * - Define the data needed for a current portfolio snapshot, including ticker
  *   extraction and normalization for the market-data API.
  */

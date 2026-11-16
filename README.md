@@ -50,3 +50,27 @@ May support other MICs in the future... certainly possible.
   - [ ] Build a React dashboard
   - [ ] Visualize historical portfolio value
   - [ ] Display top-performing and worst-performing holdings
+
+## Code style and checks
+
+Use Node.js 24 and run `npm install` to install the project tools. TypeScript is
+pinned to the 6.0 minor release because the current typescript-eslint version
+requires TypeScript below 6.1. Revisit that constraint before upgrading the compiler.
+
+Prettier handles formatting; ESLint
+checks TypeScript and JavaScript conventions. Style uses 2 spaces, semicolons,
+single quotes, trailing commas, a 100-character wrapping target, and parentheses
+around arrow function parameters. Always use braces, strict equality, and `const`
+unless reassignment is needed. Required unused callback parameters use an `_` prefix.
+
+- `npm run format`: format supported project files.
+- `npm run format:check`: check formatting without changing files.
+- `npm run lint`: check lint rules, including unused variables and imports.
+- `npm run lint:fix`: apply safe automatic lint fixes; some errors need manual edits.
+- `npm run check`: check formatting, lint, types, and run tests once.
+
+In VS Code, install the recommended Prettier and ESLint extensions to format and
+apply ESLint fixes on save. Other editors can use `.editorconfig` and Prettier.
+Generated output, uploaded data, and CSV fixtures are excluded from formatting.
+The draft holdings tests temporarily suppress unused-variable errors to preserve
+fixtures until their TODO tests are implemented.

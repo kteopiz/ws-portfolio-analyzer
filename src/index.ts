@@ -63,7 +63,7 @@ app.post('/api/holdings', upload.single('holdings'), (req: Request, res: Respons
 
   if (!result.ok) {
     console.error(result.diagnostics);
-    return res.status(422).json({ message: 'Please check your CSV and try again.' });
+    return res.status(422).json({ message: result.parsingError });
   } else {
     return res.status(200).json({ data: result.data });
   }

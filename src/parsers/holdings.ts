@@ -1,5 +1,9 @@
 import Papa from 'papaparse';
 
+export type HoldingsParseResult =
+  | { ok: true; data: (HoldingsRow | HoldingsDateRow)[] }
+  | { ok: false; diagnostics: Papa.ParseError[] };
+
 // Wealthsimple holdings report columns, before numeric values are converted.
 interface HoldingsRow {
   'Account Name': string;
@@ -98,18 +102,16 @@ function isHoldingsDateRow(value: unknown): value is HoldingsDateRow {
  * otherwise Papa Parse errors. An empty or unreadable file returns an empty
  * array, as can a validation failure with no parser errors.
  */
-export function parseHoldingsFile(fileBufferString: string): HoldingsRow[] | Papa.ParseError[] {
-  const parsedCsvToJson = Papa.parse<HoldingsRow>(fileBufferString, {
+export function parseHoldingsFile(fileBufferString: string): HoldingsParseResult {
+  const { data, errors } = Papa.parse<HoldingsRow | HoldingsDateRow>(fileBufferString, {
     header: true,
     skipEmptyLines: true,
   });
 
-  const parseData = parsedCsvToJson.data;
-  const parseErrors: Papa.ParseError[] = parsedCsvToJson.errors;
-
-  const validData = validatedParsedHoldingsCsv(parseData, parseErrors);
-
-  return validData ? parseData : parseErrors;
+  if (!validatedParsedHoldingsCsv(data, errors)) {
+    return { ok: false, diagnostics: errors };
+  }
+  return { ok: true, data };
 }
 
 /**

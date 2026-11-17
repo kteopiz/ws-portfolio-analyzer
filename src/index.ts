@@ -6,6 +6,9 @@ import express, {
 } from 'express';
 import multer from 'multer';
 
+import { parseHoldingsFile } from './parsers/holdings.js';
+import type { HoldingsParseResult } from './parsers/holdings.js';
+
 const app: Express = express();
 const port = 3000;
 
@@ -52,22 +55,22 @@ const upload = multer({
 
 app.post('/api/holdings', upload.single('holdings'), (req: Request, res: Response) => {
   if (!req.file) {
-    res.status(400).send('No file uploaded');
+    return res.status(400).send('No file uploaded');
   }
 
-  res.status(200).json({
-    fileReceived: Boolean(req.file),
-    filename: req.file?.originalname,
-    size: req.file?.size,
-    mimetype: req.file?.mimetype,
-    savedPath: req.file?.path,
-    textFields: req.body,
-  });
+  const rawCsvFromMemory: string = req.file.buffer.toString('utf8');
+  const result: HoldingsParseResult = parseHoldingsFile(rawCsvFromMemory);
+
+  if (!result.ok) {
+    console.error(result.diagnostics);
+    return res.status(422).json({ message: 'Please check your CSV and try again.' });
+  } else {
+    return res.status(200).json({ data: result.data });
+  }
 });
 
 const handleError: ErrorRequestHandler = (err, _req, res, _next) => {
   let errorMsg: string = 'Something went wrong. Please try again.';
-  // let logMsg : string = "Unknown error: " + err.message;
   // General default error code
   let statusCode: number = 500;
 

@@ -19,7 +19,7 @@ function fileFilter(_req: Request, file: Express.Multer.File, cb: multer.FileFil
     return cb(
       new HttpError(
         `Holdings upload rejected: unsupported MIME type "${file.mimetype}"`,
-        'Please upload a CSV file.',
+        'Please upload a CSV file',
         415,
       ),
     );
@@ -35,7 +35,7 @@ const upload = multer({
 
 holdingsRouter.post('/holdings', upload.single('holdings'), (req: Request, res: Response) => {
   if (!req.file) {
-    return res.status(400).send('No file uploaded');
+    return res.status(400).json({ message: 'No file uploaded' });
   }
 
   const rawCsvFromMemory: string = req.file.buffer.toString('utf8');

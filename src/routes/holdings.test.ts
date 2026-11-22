@@ -31,7 +31,7 @@ describe('POST /api/holdings', () => {
       });
 
     expect(response.status).toBe(415);
-    expect(response.text).toBe('Please upload a CSV file.');
+    expect(response.body).toEqual({ message: 'Please upload a CSV file' });
   });
 
   it('returns 422 with a CSV deemed invalid after parsing', async () => {
@@ -57,14 +57,16 @@ describe('POST /api/holdings', () => {
       });
 
     expect(response.status).toBe(413);
-    expect(response.text).toBe('This file is too large, it must be less than 2 megabytes');
+    expect(response.body).toEqual({
+      message: 'This file is too large, it must be less than 2 megabytes',
+    });
   });
 
   it('returns 400 when no file is uploaded', async () => {
     const response = await request(app).post('/api/holdings');
 
     expect(response.status).toBe(400);
-    expect(response.text).toBe('No file uploaded');
+    expect(response.body).toEqual({ message: 'No file uploaded' });
   });
 
   it('returns 422 when the uploaded file is empty', async () => {
@@ -75,7 +77,7 @@ describe('POST /api/holdings', () => {
 
     expect(response.status).toBe(422);
     expect(response.body).toEqual({
-      message: 'The CSV file is empty.',
+      message: 'The CSV file is empty',
     });
   });
 });

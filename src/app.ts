@@ -31,7 +31,7 @@ const handleError: ErrorRequestHandler = (err, _req, res, _next) => {
     }
   }
 
-  res.status(statusCode).send(errorMsg);
+  res.status(statusCode).json({ message: errorMsg });
   // TODO: Improve logging in future
   console.error(err);
 };

@@ -44,11 +44,11 @@ type ReportValidation = {
 
 // https://www.papaparse.com/docs#errors
 const papaParseCsvErrorMessages: Record<Papa.ParseError['code'], string> = {
-  TooFewFields: 'A CSV row has fewer columns than the header.',
-  TooManyFields: 'A CSV row has more columns than the header.',
-  MissingQuotes: 'A quoted field is missing its closing quote.',
-  InvalidQuotes: 'A CSV field contains invalid quotation marks.',
-  UndetectableDelimiter: 'Could not detect the CSV column separator.',
+  TooFewFields: 'A CSV row has fewer columns than the header',
+  TooManyFields: 'A CSV row has more columns than the header',
+  MissingQuotes: 'A quoted field is missing its closing quote',
+  InvalidQuotes: 'A CSV field contains invalid quotation marks',
+  UndetectableDelimiter: 'Could not detect the CSV column separator',
 };
 
 const requiredHoldingsFields: (keyof HoldingsRow)[] = [
@@ -88,7 +88,7 @@ function formatCsvError(error: Papa.ParseError): string {
     error.row !== undefined
   ) {
     const comparison = error.code === 'TooFewFields' ? 'fewer' : 'more';
-    return `CSV record ${error.row + 1} has ${comparison} columns than the header.`;
+    return `CSV record ${error.row + 1} has ${comparison} columns than the header`;
   }
 
   return papaParseCsvErrorMessages[error.code];
@@ -162,7 +162,7 @@ function isValidReportTimestamp(timestamp: string): boolean {
  */
 export function parseHoldingsFile(fileBufferString: string): HoldingsParseResult {
   if (fileBufferString.trim() === '') {
-    return { ok: false, diagnostics: [], parsingError: 'The CSV file is empty.' };
+    return { ok: false, diagnostics: [], parsingError: 'The CSV file is empty' };
   }
 
   const { data, errors, meta } = Papa.parse<HoldingsRow | HoldingsDateRow>(fileBufferString, {
@@ -186,7 +186,7 @@ export function parseHoldingsFile(fileBufferString: string): HoldingsParseResult
   const headers = meta.fields ?? [];
   const missingFields = requiredHoldingsFields.filter((field) => !headers.includes(field));
   if (missingFields.length > 0) {
-    return reject(`Missing required columns: ${missingFields.join(', ')}.`);
+    return reject(`Missing required columns: ${missingFields.join(', ')}`);
   }
 
   // Validate uploaded CSV row by row
@@ -232,7 +232,7 @@ function validateHoldingsReport(rows: (HoldingsRow | HoldingsDateRow)[]): Report
       if (footer) {
         return {
           footerIndex: footer.index,
-          issue: { code: 'DUPLICATE_FOOTER', message: 'Duplicate date timestamp row.' },
+          issue: { code: 'DUPLICATE_FOOTER', message: 'Duplicate date timestamp row' },
         };
       }
       footer = { index, timestamp: row['Account Name'] };
@@ -248,14 +248,14 @@ function validateHoldingsReport(rows: (HoldingsRow | HoldingsDateRow)[]): Report
   });
 
   if (malformedIndex !== undefined) {
-    return invalid(`CSV record ${malformedIndex + 1} is malformed.`);
+    return invalid(`CSV record ${malformedIndex + 1} is malformed`);
   }
   if (!footer) {
     return invalid('No date timestamp row exists');
   }
   if (!isValidReportTimestamp(footer.timestamp)) {
     return invalid(
-      'The report timestamp must contain a valid date, time, and offset in the format As of YYYY-MM-DD HH:mm GMT±HH:mm.',
+      'The report timestamp must contain a valid date, time, and offset in the format As of YYYY-MM-DD HH:mm GMT±HH:mm',
     );
   }
   if (!hasHolding) {

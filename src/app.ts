@@ -26,7 +26,8 @@ const handleError: ErrorRequestHandler = (err, _req, res, _next) => {
   else if (err instanceof multer.MulterError) {
     switch (err.code) {
       case 'LIMIT_FILE_SIZE':
-        errorMsg = 'This file is too large, it must be less than 2 megabytes';
+        // err.field is of type holdings | activities
+        errorMsg = `This file is too large, it must be less than ${err.field === 'holdings' ? 2 : 5} megabytes`;
         statusCode = 413;
     }
   }

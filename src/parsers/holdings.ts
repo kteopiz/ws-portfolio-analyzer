@@ -267,9 +267,6 @@ function validateHoldingsReport(rows: (HoldingsRow | HoldingsDateRow)[]): Report
 
 /*
  * FUTURE TODO
- * - Provide actionable validation messages, including duplicate date footers.
- * - Add Vitest coverage for valid reports, malformed rows, missing or duplicate
- *   footers, parser errors, and file-read failures.
  * - Define the data needed for a current portfolio snapshot, including ticker
  *   extraction and normalization for the market-data API.
  */

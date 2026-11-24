@@ -13,6 +13,12 @@
         <input id="holdings" name="holdings" type="file" required accept=".csv,text/csv" />
         <button type="submit">Upload</button>
       </form>
+      <h1>Upload your activities</h1>
+      <form action="/api/activties" method="post" enctype="multipart/form-data">
+        <label for="activities">Activities CSV</label>
+        <input id="activities" name="activities" type="file" required accept=".csv,text/csv" />
+        <button type="submit">Upload</button>
+      </form>
     </main>
   </body>
 </html>

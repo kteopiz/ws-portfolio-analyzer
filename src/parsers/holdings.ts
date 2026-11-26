@@ -1,5 +1,7 @@
 import Papa from 'papaparse';
 
+import { formatCsvError, type ParseResult } from './csv-utils.js';
+
 // Wealthsimple holdings report columns, before numeric values are converted.
 interface HoldingsRow {
   'Account Name': string;
@@ -30,9 +32,7 @@ interface HoldingsDateRow {
   'Account Name': string;
 }
 
-export type HoldingsParseResult =
-  | { ok: true; data: (HoldingsRow | HoldingsDateRow)[] }
-  | { ok: false; diagnostics: Papa.ParseError[]; parsingError: string };
+export type HoldingsParseResult = ParseResult<(HoldingsRow | HoldingsDateRow)[]>;
 
 type ReportValidation = {
   footerIndex: number | null;
@@ -40,15 +40,6 @@ type ReportValidation = {
     code: 'DUPLICATE_FOOTER' | 'INVALID_REPORT';
     message: string;
   };
-};
-
-// https://www.papaparse.com/docs#errors
-const papaParseCsvErrorMessages: Record<Papa.ParseError['code'], string> = {
-  TooFewFields: 'A CSV row has fewer columns than the header',
-  TooManyFields: 'A CSV row has more columns than the header',
-  MissingQuotes: 'A quoted field is missing its closing quote',
-  InvalidQuotes: 'A CSV field contains invalid quotation marks',
-  UndetectableDelimiter: 'Could not detect the CSV column separator',
 };
 
 const requiredHoldingsFields: (keyof HoldingsRow)[] = [
@@ -74,25 +65,6 @@ const requiredHoldingsFields: (keyof HoldingsRow)[] = [
   'Market Unrealized Returns',
   'Market Unrealized Returns Currency',
 ];
-
-/**
- * Formats a Papa Parse diagnostic for the upload response.
- *
- * @param error - The diagnostic selected for display.
- * @returns A message that uses one-based record numbers for field-count errors
- * when Papa provides a row index.
- */
-function formatCsvError(error: Papa.ParseError): string {
-  if (
-    (error.code === 'TooFewFields' || error.code === 'TooManyFields') &&
-    error.row !== undefined
-  ) {
-    const comparison = error.code === 'TooFewFields' ? 'fewer' : 'more';
-    return `CSV record ${error.row + 1} has ${comparison} columns than the header`;
-  }
-
-  return papaParseCsvErrorMessages[error.code];
-}
 
 /**
  * Checks that every expected holdings column contains a string.
@@ -267,9 +239,6 @@ function validateHoldingsReport(rows: (HoldingsRow | HoldingsDateRow)[]): Report
 
 /*
  * FUTURE TODO
- * - Provide actionable validation messages, including duplicate date footers.
- * - Add Vitest coverage for valid reports, malformed rows, missing or duplicate
- *   footers, parser errors, and file-read failures.
  * - Define the data needed for a current portfolio snapshot, including ticker
  *   extraction and normalization for the market-data API.
  */

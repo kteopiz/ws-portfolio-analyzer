@@ -1,7 +1,32 @@
 import type Papa from 'papaparse';
+import { type ActivitiesRow } from './activities.js';
+
+export type ActivityTimestampIssue = {
+  field: 'effective_date' | 'effective_time' | 'settlement_date';
+  code: 'INVALID_DATE' | 'INVALID_TIME';
+  message: string;
+};
+
+export type ActivityFieldIssue = {
+  fields: (keyof ActivitiesRow)[];
+  code: 'REQUIRED_FIELD' | 'INVALID_TYPE' | 'UNKNOWN_ACTIVITY_TYPE';
+  message: string;
+};
+
+export type ActivityRowIssues = {
+  record: number;
+  fieldIssues: ActivityFieldIssue | null;
+  timestampIssues: ActivityTimestampIssue[];
+};
 
 export type ParseResult<T> =
-  { ok: true; data: T } | { ok: false; diagnostics: Papa.ParseError[]; parsingError: string };
+  | { ok: true; data: T }
+  | {
+      ok: false;
+      diagnostics: Papa.ParseError[];
+      parsingError: string;
+      issues?: ActivityRowIssues[];
+    };
 
 // https://www.papaparse.com/docs#errors
 const papaParseCsvErrorMessages: Record<Papa.ParseError['code'], string> = {

@@ -31,13 +31,6 @@ export interface ActivitiesRow {
 
 export type ActivitiesParseResult = ParseResult<ActivitiesRow[]>;
 
-// type ActivitiesReportValidation = {
-//   issue?: {
-//     message: 'Some activity rows need correction.';
-//     issues: RowIssue[];
-//   };
-// };
-
 const requiredActivitiesFields: (keyof ActivitiesRow)[] = [
   'effective_date',
   'effective_time',

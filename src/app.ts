@@ -3,12 +3,14 @@ import multer from 'multer';
 
 import { HttpError } from './errors/http-error.js';
 import { holdingsRouter } from './routes/holdings.js';
+import { activitiesRouter } from './routes/activities.js';
 
 export const app: Express = express();
 
 // Serve homepage
 app.use(express.static('public'));
 app.use('/api', holdingsRouter);
+app.use('/api', activitiesRouter);
 
 const handleError: ErrorRequestHandler = (err, _req, res, _next) => {
   let errorMsg: string = 'Something went wrong. Please try again.';
